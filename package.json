@@ -1,0 +1,43 @@
+{
+  "name": "sport-analysis-app",
+  "version": "1.0.0",
+  "description": "Live Football Analysis App with Real-time Fixtures and Probability Calculations",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required for static site'",
+    "start": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "football",
+    "soccer", 
+    "sports",
+    "analysis",
+    "betting",
+    "probabilities",
+    "fixtures",
+    "live-data"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "vercel": "latest"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/sport-analysis-app.git"
+  },
+  "homepage": "https://your-app-name.vercel.app",
+  "vercel": {
+    "functions": {
+      "api/fixtures.js": {
+        "maxDuration": 30
+      }
+    }
+  }
+}
