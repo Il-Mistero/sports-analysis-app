@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sport Analysis App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .league-selector {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .league-selector h2 {
+            color: #2d5016;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        select {
+            padding: 12px 16px;
+            border: 2px solid #6b8e23;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #556b2f;
+            box-shadow: 0 0 0 3px rgba(107, 142, 35, 0.2);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-left: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fixtures-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .fixtures-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .fixtures-table th {
+            background: linear-gradient(135deg, #6b8e23, #556b2f);
+            color: white;
+            padding: 15px 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 2px solid #4a5d2a;
+        }
+
+        .fixtures-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 0.85rem;
+        }
+
+        .fixtures-table tr:hover {
+            background-color: rgba(107, 142, 35, 0.05);
+        }
+
+        .fixture-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 180px;
+        }
+
+        .team-name {
+            font-weight: 600;
+            color: #2d5016;
+        }
+
+        .vs {
+            color: #666;
+            font-weight: 500;
+            margin: 0 8px;
+        }
+
+        .probability {
+            background: linear-gradient(135deg, #90ee90, #6b8e23);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .probability.high {
+            background: linear-gradient(135deg, #228b22, #006400);
+        }
+
+        .probability.medium {
+            background: linear-gradient(135deg, #9acd32, #6b8e23);
+        }
+
+        .probability.low {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+        }
+
+        .error {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .no-matches {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .fixtures-table {
+                font-size: 0.7rem;
+            }
+            
+            .fixtures-table th,
+            .fixtures-table td {
+                padding: 8px 4px;
+            }
+            
+            .fixture-info {
+                min-width: 120px;
+                flex-direction: column;
+                gap: 2px;
+            }
+            
+            .vs {
+                margin: 0;
+                font-size: 0.7rem;
+            }
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #6b8e23, #556b2f);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: linear-gradient(135deg, #556b2f, #4a5d2a);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .last-updated {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚽ Sport Analysis App</h1>
+            <p>Live Football Fixtures & Probability Analysis</p>
+        </div>
+
+        <div class="league-selector">
+            <h2>Select League</h2>
+            <select id="leagueSelect">
+                <option value="PL">Premier League (England)</option>
+                <option value="PD">La Liga (Spain)</option>
+                <option value="SA">Serie A (Italy)</option>
+                <option value="BL1">Bundesliga (Germany)</option>
+                <option value="FL1">Ligue 1 (France)</option>
+                <option value="DED">Eredivisie (Netherlands)</option>
+            </select>
+            <button class="refresh-btn" onclick="loadFixtures()">Refresh Data</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            Loading fixtures and calculating probabilities...
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div class="fixtures-container" id="fixturesContainer" style="display: none;">
+            <table class="fixtures-table">
+                <thead>
+                    <tr>
+                        <th>Fixture</th>
+                        <th>Date & Time</th>
+                        <th>Team 1 Win</th>
+                        <th>Team 2 Win</th>
+                        <th>Over 1.5</th>
+                        <th>Under 1.5</th>
+                        <th>Over 2.5</th>
+                        <th>1H Over 0.5</th>
+                        <th>1H Under 1.5</th>
+                    </tr>
+                </thead>
+                <tbody id="fixturesBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="last-updated" id="lastUpdated"></div>
+    </div>
+
+    <script>
+        const API_KEY = '853d7affb6ef483d9fa2058994f9f4ae';
+        const BASE_URL = 'https://api.football-data.org/v4';
+        let currentData = [];
+        let teamStats = new Map();
+
+        async function fetchFixtures(leagueCode) {
+            try {
+                // Get current date range for this week
+                const today = new Date();
+                const startDate = new Date(today);
+                startDate.setDate(today.getDate() - today.getDay()); // Start of week
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 7); // End of week
+
+                const dateFrom = startDate.toISOString().split('T')[0];
+                const dateTo = endDate.toISOString().split('T')[0];
+
+                const response = await fetch(`${BASE_URL}/competitions/${leagueCode}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`, {
+                    headers: {
+                        'X-Auth-Token': API_KEY
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Fetch team statistics for better probability calculations
+                await fetchTeamStats(leagueCode);
+                
+                return data;
+                
+            } catch (error) {
+                console.error('Error fetching fixtures:', error);
+                throw error;
+            }
+        }
+
+        async function fetchTeamStats(leagueCode) {
+            try {
+                const response = await fetch(`${BASE_URL}/competitions/${leagueCode}/standings`, {
+                    headers: {
+                        'X-Auth-Token': API_KEY
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.standings && data.standings[0] && data.standings[0].table) {
+                        data.standings[0].table.forEach(team => {
+                            teamStats.set(team.team.id, {
+                                position: team.position,
+                                points: team.points,
+                                goalsFor: team.goalsFor,
+                                goalsAgainst: team.goalsAgainst,
+                                goalDifference: team.goalDifference,
+                                won: team.won,
+                                draw: team.draw,
+                                lost: team.lost,
+                                played: team.playedGames
+                            });
+                        });
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not fetch team stats:', error);
+            }
+        }
+
+        function calculateProbabilities(homeTeam, awayTeam) {
+            // Get team statistics if available
+            const homeStats = teamStats.get(homeTeam.id) || {};
+            const awayStats = teamStats.get(awayTeam.id) || {};
+            
+            // Calculate team strength based on available data
+            const homeStrength = calculateTeamStrength(homeStats);
+            const awayStrength = calculateTeamStrength(awayStats);
+            
+            // Home advantage factor
+            const homeAdvantage = 0.1;
+            const adjustedHomeStrength = homeStrength + homeAdvantage;
+            
+            // Win probabilities
+            const totalStrength = adjustedHomeStrength + awayStrength + 0.3; // 0.3 for draw possibility
+            let team1Win = adjustedHomeStrength / totalStrength;
+            let team2Win = awayStrength / totalStrength;
+            
+            // Ensure probabilities are reasonable
+            team1Win = Math.max(0.15, Math.min(0.75, team1Win));
+            team2Win = Math.max(0.15, Math.min(0.75, team2Win));
+            
+            // Goal-based probabilities
+            const homeGoalsPerGame = homeStats.goalsFor ? homeStats.goalsFor / homeStats.played : 1.5;
+            const awayGoalsPerGame = awayStats.goalsFor ? awayStats.goalsFor / awayStats.played : 1.5;
+            const expectedGoals = homeGoalsPerGame + awayGoalsPerGame;
+            
+            // Calculate goal probabilities using Poisson distribution approximation
+            const over1_5 = expectedGoals > 1.5 ? Math.min(0.95, 0.6 + (expectedGoals - 1.5) * 0.15) : 0.4 + expectedGoals * 0.13;
+            const under1_5 = 1 - over1_5;
+            const over2_5 = expectedGoals > 2.5 ? Math.min(0.85, 0.4 + (expectedGoals - 2.5) * 0.12) : 0.25 + expectedGoals * 0.1;
+            
+            // First half probabilities (typically 60% of full game)
+            const firstHalfExpected = expectedGoals * 0.6;
+            const firstHalfOver0_5 = Math.min(0.9, 0.5 + firstHalfExpected * 0.2);
+            const firstHalfUnder1_5 = Math.min(0.9, 0.7 - firstHalfExpected * 0.1);
+            
+            return {
+                team1Win: team1Win.toFixed(2),
+                team2Win: team2Win.toFixed(2),
+                over1_5: over1_5.toFixed(2),
+                under1_5: under1_5.toFixed(2),
+                over2_5: over2_5.toFixed(2),
+                firstHalfOver0_5: firstHalfOver0_5.toFixed(2),
+                firstHalfUnder1_5: firstHalfUnder1_5.toFixed(2)
+            };
+        }
+        
+        function calculateTeamStrength(stats) {
+            if (!stats.played || stats.played === 0) {
+                return 0.5; // Default strength for teams without stats
+            }
+            
+            // Points per game (max 3)
+            const ppg = stats.points / stats.played / 3;
+            
+            // Goal difference per game
+            const gdpg = stats.goalDifference / stats.played;
+            const normalizedGD = Math.max(-1, Math.min(1, gdpg / 3)); // Normalize between -1 and 1
+            
+            // Win ratio
+            const winRatio = stats.won / stats.played;
+            
+            // Combine factors
+            const strength = (ppg * 0.4) + ((normalizedGD + 1) / 2 * 0.3) + (winRatio * 0.3);
+            
+            return Math.max(0.1, Math.min(0.9, strength));
+        }
+
+        function getProbabilityClass(probability) {
+            const prob = parseFloat(probability);
+            if (prob >= 0.7) return 'high';
+            if (prob >= 0.5) return 'medium';
+            return 'low';
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function displayFixtures(matches) {
+            const tbody = document.getElementById('fixturesBody');
+            tbody.innerHTML = '';
+
+            if (!matches || matches.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="no-matches">No upcoming fixtures found for this week.</td></tr>';
+                return;
+            }
+
+            matches.forEach(match => {
+                if (match.status === 'SCHEDULED' || match.status === 'TIMED') {
+                    const probabilities = calculateProbabilities(match.homeTeam, match.awayTeam);
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>
+                            <div class="fixture-info">
+                                <span class="team-name">${match.homeTeam.shortName || match.homeTeam.name}</span>
+                                <span class="vs">vs</span>
+                                <span class="team-name">${match.awayTeam.shortName || match.awayTeam.name}</span>
+                            </div>
+                        </td>
+                        <td>${formatDateTime(match.utcDate)}</td>
+                        <td><span class="probability ${getProbabilityClass(probabilities.team1Win)}">${probabilities.team1Win}</span></td>
+                        <td><span class="probability ${getProbabilityClass(probabilities.team2Win)}">${probabilities.team2Win}</span></td>
+                        <td><span class="probability ${getProbabilityClass(probabilities.over1_5)}">${probabilities.over1_5}</span></td>
+                        <td><span class="probability ${getProbabilityClass(probabilities.under1_5)}">${probabilities.under1_5}</span></td>
+                        <td><span class="probability ${getProbabilityClass(probabilities.over2_5)}">${probabilities.over2_5}</span></td>
+                        <td><span class="probability ${getProbabilityClass(probabilities.firstHalfOver0_5)}">${probabilities.firstHalfOver0_5}</span></td>
+                        <td><span class="probability ${getProbabilityClass(probabilities.firstHalfUnder1_5)}">${probabilities.firstHalfUnder1_5}</span></td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                }
+            });
+
+            document.getElementById('lastUpdated').textContent = 
+                `Last updated: ${new Date().toLocaleString()}`;
+        }
+
+        async function loadFixtures() {
+            const leagueSelect = document.getElementById('leagueSelect');
+            const selectedLeague = leagueSelect.value;
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const fixturesContainer = document.getElementById('fixturesContainer');
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            fixturesContainer.style.display = 'none';
+
+            try {
+                const data = await fetchFixtures(selectedLeague);
+                currentData = data.matches || [];
+                displayFixtures(currentData);
+                
+                loading.style.display = 'none';
+                fixturesContainer.style.display = 'block';
+                
+            } catch (err) {
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = `Error loading fixtures: ${err.message}. Please check your internet connection and try again.`;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('leagueSelect').addEventListener('change', loadFixtures);
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', loadFixtures);
+
+        // Auto-refresh every 30 minutes
+        setInterval(loadFixtures, 30 * 60 * 1000);
+    </script>
+</body>
+</html>
